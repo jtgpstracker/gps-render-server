@@ -8,19 +8,33 @@ app.use(express.json());
 const SUPABASE_URL =
   "https://zfigoukzmeklkciecthx.supabase.co/rest/v1/positions";
 
-const SUPABASE_KEY = process.env.SUPABASE_KEY; // ใส่ผ่าน Render env
-
+const SUPABASE_KEY = process.env.SUPABASE_KEY; // อ่านจาก Render ENV
 const PORT = process.env.PORT || 3000;
 // =========================================
 
+// ===== DEBUG: CHECK ENV =====
+console.log("===== ENV CHECK =====");
+console.log("PORT:", PORT);
+console.log("SUPABASE_KEY loaded:", !!SUPABASE_KEY);
+console.log("=====================");
+
 // Health check
 app.get("/", (req, res) => {
-  res.send("Render HTTP Gateway OK");
+  res.json({
+    status: "ok",
+    env_loaded: !!SUPABASE_KEY
+  });
 });
 
 // รับข้อมูลจาก ESP32
 app.post("/track", async (req, res) => {
   try {
+    if (!SUPABASE_KEY) {
+      return res.status(500).json({
+        error: "SUPABASE_KEY not loaded from ENV"
+      });
+    }
+
     const { imei, lat, lon, source, bat, speed } = req.body;
 
     if (!imei || lat === undefined || lon === undefined) {
