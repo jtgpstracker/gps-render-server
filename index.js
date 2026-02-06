@@ -8,15 +8,19 @@ app.use(express.json());
 const SUPABASE_URL =
   "https://zfigoukzmeklkciecthx.supabase.co/rest/v1/positions";
 
-const SUPABASE_KEY = process.env.SUPABASE_KEY; // อ่านจาก Render ENV
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const PORT = process.env.PORT || 3000;
 // =========================================
 
-// ===== DEBUG: CHECK ENV =====
+// ===== DEBUG ENV (สำคัญมาก) =====
 console.log("===== ENV CHECK =====");
 console.log("PORT:", PORT);
 console.log("SUPABASE_KEY loaded:", !!SUPABASE_KEY);
+if (!SUPABASE_KEY) {
+  console.error("❌ SUPABASE_KEY is MISSING");
+}
 console.log("=====================");
+// =================================
 
 // Health check
 app.get("/", (req, res) => {
@@ -30,9 +34,7 @@ app.get("/", (req, res) => {
 app.post("/track", async (req, res) => {
   try {
     if (!SUPABASE_KEY) {
-      return res.status(500).json({
-        error: "SUPABASE_KEY not loaded from ENV"
-      });
+      return res.status(500).json({ error: "SUPABASE_KEY missing" });
     }
 
     const { imei, lat, lon, source, bat, speed } = req.body;
@@ -63,11 +65,13 @@ app.post("/track", async (req, res) => {
 
     if (!sb.ok) {
       const text = await sb.text();
+      console.error("Supabase error:", text);
       return res.status(500).json({ supabase_error: text });
     }
 
     res.json({ status: "ok" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
